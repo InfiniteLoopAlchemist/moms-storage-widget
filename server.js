@@ -15,6 +15,11 @@ const MAX_SIZE_BYTES = MAX_SIZE_TB * 1024 ** 4;
 
 let folderSizeData = {};
 
+/**
+ * Retrieves API information using the given session.
+ * @param {Object} session - The session to use for the API request.
+ * @returns {Promise<Object>} - A Promise that resolves with the retrieved API information.
+ */
 const getApiInfo = async( session ) => {
     console.log('Starting to retrieve API info');
     const response = await session.get('/webapi/query.cgi', {
@@ -29,6 +34,14 @@ const getApiInfo = async( session ) => {
     return response.data;
 };
 
+/**
+ * Logs into DSM (DiskStation Manager) and retrieves the session ID.
+ *
+ * @param {Object} session - The axios session object for making HTTP requests.
+ * @param {String} authPath - The authentication path on the DSM server.
+ * @returns {Promise<Object>} A Promise that resolves with the response data containing the session ID.
+ * @throws {Error} If the session ID is not retrieved.
+ */
 const loginDsm = async( session, authPath ) => {
     console.log('Starting DSM login');
     const response = await session.get(`/webapi/${ authPath }`, {
@@ -50,6 +63,15 @@ const loginDsm = async( session, authPath ) => {
     return response.data;
 };
 
+/**
+ * Asynchronously starts the folder size calculation.
+ *
+ * @param {Object} session - The session object used for making requests.
+ * @param {string} sid - The session ID.
+ * @param {string} dirsizePath - The directory path for which to calculate the size.
+ *
+ * @returns {Promise} - A Promise that resolves with the response data.
+ */
 const startFolderSizeCalculation = async( session, sid, dirsizePath ) => {
     console.log('Starting folder size calculation');
     const response = await session.get(`/webapi/${ dirsizePath }`, {
@@ -65,6 +87,16 @@ const startFolderSizeCalculation = async( session, sid, dirsizePath ) => {
     return response.data;
 };
 
+/**
+ * Retrieves the status of the folder size calculation task.
+ *
+ * @async
+ * @param {Object} session - The session object used for making API requests.
+ * @param {string} sid - The session ID.
+ * @param {string} dirsizePath - The file path of the directory to get the folder size.
+ * @param {string} taskid - The task ID of the folder size calculation task.
+ * @returns {Promise<Object>} - A Promise that resolves to the folder size status response object.
+ */
 const getFolderSizeStatus = async( session, sid, dirsizePath, taskid ) => {
     console.log('Retrieving folder size status');
     const response = await session.get(`/webapi/${ dirsizePath }`, {
@@ -80,6 +112,15 @@ const getFolderSizeStatus = async( session, sid, dirsizePath, taskid ) => {
     return response.data;
 };
 
+/**
+ * Stops the calculation of the folder size.
+ *
+ * @param {Object} session - The session object used for making API requests.
+ * @param {string} sid - The session ID.
+ * @param {string} dirsizePath - The path of the directory to calculate the size for.
+ * @param {string} taskid - The ID of the calculation task to stop.
+ * @returns {Promise<Object>} - A promise that resolves to the response data when the calculation is stopped.
+ */
 const stopFolderSizeCalculation = async( session, sid, dirsizePath, taskid ) => {
     console.log('Stopping folder size calculation');
     const response = await session.get(`/webapi/${ dirsizePath }`, {
@@ -110,6 +151,15 @@ const logoutDsm = async( session, authPath, sid ) => {
     return response.data;
 };
 
+/**
+ * Asynchronously calculates the size of a folder.
+ *
+ * This function initiates the folder size calculation by retrieving API information, logging in to DSM,
+ * starting the folder size calculation task, and periodically checking the status until the calculation
+ * is complete. The calculated folder size is logged and returned as folderSizeData.
+ *
+ * @returns {Promise<void>} A Promise that resolves when the folder size calculation is completed
+ */
 const calculateFolderSize = async() => {
     console.log('Folder size calculation initiated');
     const session = axios.create({
@@ -203,7 +253,7 @@ const calculateFolderSize = async() => {
 };
 
 // Schedule the folder size calculation every hour between 5 AM and 10 PM using node-cron
-cron.schedule('*/30 8-22 * * *', async() => {
+cron.schedule('0 8-22 * * *', async() => {
     console.log('Scheduled task started: calculateFolderSize');
     await calculateFolderSize();
 });
